@@ -34,3 +34,8 @@ func InitBizlog() {
     log.SetLevel(log.LevelStringDebug)
     log.SetFlags(log.LogDate | log.LogTime | log.LogMicroTime | log.LogLongFile)
 }
+
+//@2 业务log清理
+func FiniBizLog() {
+    log.Flush()
+}

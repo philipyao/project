@@ -4,19 +4,19 @@ import (
     "github.com/philipyao/project/public/configsvr/core"
 )
 
-
-type serviceConfiger struct {}
-func (sc *serviceConfiger) OnInit() error {
+//implement app.Service
+type serviceConfig struct {}
+func (sc *serviceConfig) OnInit() error {
     err := core.Init(argRegistry, argDBAddr, dbLogin)
     if err != nil {
         return err
     }
     return nil
 }
-func (sc *serviceConfiger) Serve() error {
+func (sc *serviceConfig) Serve() error {
     return nil
 }
-func (sc *serviceConfiger) Close() {}
-func (sc *serviceConfiger) OnFini() {
+func (sc *serviceConfig) Close() {}
+func (sc *serviceConfig) OnFini() {
     core.Fini()
 }

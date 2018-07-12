@@ -2,7 +2,6 @@ package main
 
 import (
     "github.com/philipyao/app"
-    syslog "log"
     log "github.com/philipyao/kit/logging"
     "github.com/philipyao/project/common"
     "fmt"
@@ -23,29 +22,32 @@ var (
 
 func main() {
     var err error
-    err = app.Init(
+
+    app.ReadArgs(
         app.WithArgInt(&argPortBase, "portbase", 0, "listening base port"),
         app.WithArgString(&argRegistry, "registry", "", "rpc registry"),
-        //todo
-        //app.WithArgString(&argDBAddr, "db", "", "db addr"),
     )
-    if err != nil {
-        syslog.Fatalf("init err %v, exit", err)
-    }
-
     common.InitBizlog()
 
+    err = app.Init(
+        app.WithLogger(log.Info),
+        app.WithCPUNum(1),
+    )
+    if err != nil {
+        log.Fatal("init err %v, exit", err)
+    }
     err = app.Run(
-        //rpc
+        //service: rpc
         app.ServeRpc(fmt.Sprintf(":%v", argPortBase), argRegistry, new(configerRpc), "Config"),
-        //http
-        app.ServeHttp(fmt.Sprintf(":%v", argPortBase+1), serveHttp),
-        //business
-        new(serviceConfiger),
+        //service: http
+        app.ServeHttp(fmt.Sprintf(":%v", argPortBase + 1), serveHttp),
+        //service: business
+        new(serviceConfig),
     )
     if err != nil {
         log.Fatal("run err %v, exit", err)
     }
-    log.Flush()
+
+    common.FiniBizLog()
 }
 
