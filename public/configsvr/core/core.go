@@ -104,6 +104,11 @@ func AddConfig(namespace, key, value string) (*def.Config, error) {
     if err != nil {
         return nil, err
     }
+
+    err = notifyWithZK(namespace, key)
+    if err != nil {
+        log.Error("notifyWithZK<%v, %v> err: %v", namespace, key, err)
+    }
     return conf, nil
 }
 
@@ -158,6 +163,7 @@ func prepareDBData() error {
     if err != nil {
         return err
     }
+    log.Debug("after prepareDBData: namespaces: %+v", ns)
     return nil
 }
 
@@ -167,5 +173,9 @@ func updateByConfig(opConf *def.Config, value string) error {
     if err != nil {
         return err
     }
-    return notifyWithZK(opConf.Namespace, opConf.Key)
+    err = notifyWithZK(opConf.Namespace, opConf.Key)
+    if err != nil {
+        log.Error("notifyWithZK<%v, %v> err: %v", opConf.Namespace, opConf.Key, err)
+    }
+    return nil
 }

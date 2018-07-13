@@ -32,7 +32,7 @@ func InitBizlog() {
         panic(err)
     }
     log.SetLevel(log.LevelStringDebug)
-    log.SetFlags(log.LogDate | log.LogTime | log.LogMicroTime | log.LogLongFile)
+    log.SetFlags(log.LogDate | log.LogTime | log.LogMicroTime | log.LogShortFile)
 }
 
 //@2 业务log清理

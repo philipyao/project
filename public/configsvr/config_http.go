@@ -230,6 +230,7 @@ func serveHttp(worker *phttp.HTTPWorker) error {
         var failed []string
         var changes []*def.OpChange
         for _, upd := range req.Updates {
+            log.Debug("try update config: %+v", upd)
             c := core.ConfigByID(upd.ID)
 
             var change def.OpChange
@@ -239,8 +240,8 @@ func serveHttp(worker *phttp.HTTPWorker) error {
             change.Value = upd.Value
 
             err = core.UpdateConfig(upd.ID, upd.Value, upd.Version)
-            log.Debug("try update: %v %v, err %v", upd.ID, upd.Value, err)
             if err != nil {
+                log.Error("core.UpdateConfig: %v", err)
                 errMsg := fmt.Sprintf("config<id:%v> update error: %v; ", upd.ID, err.Error())
                 failed = append(failed, errMsg)
                 continue
@@ -251,6 +252,7 @@ func serveHttp(worker *phttp.HTTPWorker) error {
             changes = append(changes, &change)
         }
         for _, add := range req.Adds {
+            log.Debug("try add config: %+v", add)
             var change def.OpChange
             change.Namespace = add.Namespace
             change.Key = add.Key
@@ -259,6 +261,7 @@ func serveHttp(worker *phttp.HTTPWorker) error {
 
             c, err := core.AddConfig(add.Namespace, add.Key, add.Value)
             if err != nil {
+                log.Error("core.AddConfig: %v", err)
                 errMsg := fmt.Sprintf("config<%+v> add error: %v; ", add, err.Error())
                 failed = append(failed, errMsg)
                 continue
