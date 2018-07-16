@@ -24,5 +24,6 @@ func (configerRpc) FetchConfig(args *proto.FetchConfigArg, response *proto.Fetch
             Value:  v[1],
         })
     }
+    log.Debug("rsp confs: %+v", response)
     return nil
 }

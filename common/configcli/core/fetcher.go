@@ -1,30 +1,24 @@
 package core
 
 import (
-    "net"
-	"net/rpc"
 	"fmt"
-    "time"
 	"errors"
-	"project/share/proto"
+    log "github.com/philipyao/kit/logging"
+    "github.com/philipyao/prpc/client"
+    "github.com/philipyao/project/common/proto"
 )
 
 var (
-	rpcClient   *rpc.Client
+	rpcSvc   *client.SvcClient
 )
 
-//TODO confsvr的rpc地址
-func InitFetcher(svrAddr string) error {
-    conn, err := net.DialTimeout("tcp", svrAddr, time.Second)
-    if err != nil {
-        return err
-    }
-    rpcClient = rpc.NewClient(conn)
+func InitFetcher(rpcClient *client.Client) error {
+    rpcSvc = rpcClient.Service("Config", "public1")
 	return nil
 }
 
 func FetchConfFromServer(namespace string, keys []string) ([]*proto.ConfigEntry, error){
-	if rpcClient == nil {
+	if rpcSvc == nil {
 		panic("fetcher not init.")
 	}
 	if namespace == "" || len(keys) == 0 {
@@ -35,10 +29,11 @@ func FetchConfFromServer(namespace string, keys []string) ([]*proto.ConfigEntry,
 		Keys: keys,
 	}
 	var response proto.FetchConfigRes
-	err := rpcClient.Call("Conf.FetchConfig", args, &response)
+	err := rpcSvc.Call("FetchConfig", args, &response)
 	if err != nil {
 		return nil, fmt.Errorf("FetchConfig call error %v\n", err)
 	}
+    log.Debug("fetch response: %+v", response)
 	if response.Errmsg != "" {
 		return nil, errors.New(response.Errmsg)
 	}

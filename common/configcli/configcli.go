@@ -5,24 +5,20 @@ import (
     "reflect"
     "errors"
 
+    "github.com/philipyao/prpc/client"
     "github.com/philipyao/project/common/commdef"
     "github.com/philipyao/project/common/configcli/core"
-)
-
-const (
-    PConfTag            = "pconf"
-    NameKeyZKAddr       = "zkaddr"
 )
 
 var (
     currNamespace   string
 )
 
-func RegisterConfig(namespace string, confDef interface{}) error {
+// 配置客户端向配置中心注册用到的配置项
+func RegisterConfig(namespace string, confDef interface{}, rpcClient *client.Client) error {
     var err error
 
-    confAddr := "10.1.164.99:12001"
-    err = core.InitFetcher(confAddr)
+    err = core.InitFetcher(rpcClient)
     if err != nil {
         return err
     }
@@ -35,23 +31,24 @@ func RegisterConfig(namespace string, confDef interface{}) error {
     t := reflect.TypeOf(confDef)
     v := reflect.ValueOf(confDef)
     if t.Kind() != reflect.Ptr {
-        return fmt.Errorf("confdef should be pointer.")
+        return errors.New("confdef should be pointer.")
     }
     t = t.Elem()
     if t.Kind() != reflect.Struct {
         return fmt.Errorf("confdef should be struct pointer. %v", reflect.TypeOf(t.Elem()).Kind())
     }
     if t.NumField() == 0 {
-        return fmt.Errorf("confdef with no fields.")
+        return errors.New("confdef with no fields.")
     }
-    //找出'pconf' tag的字段
+    //找出'config' tag的字段
     tagFound := false
     for i := 0; i < t.NumField(); i++ {
         sf := t.Field(i)
-        tag, ok := sf.Tag.Lookup(PConfTag)
+        tag, ok := sf.Tag.Lookup(commdef.CongigTagName)
         if !ok { continue }
         if tag == "" {
-            return fmt.Errorf("empty value of 'pconf' tag for field <%v> is not allowed.", sf.Name)
+            return fmt.Errorf("empty value of '%v' tag for field <%v> is not allowed.",
+                commdef.CongigTagName, sf.Name)
         }
         tagFound = true
         goName := tag2GoName(tag)
@@ -61,7 +58,7 @@ func RegisterConfig(namespace string, confDef interface{}) error {
         }
     }
     if tagFound == false {
-        return fmt.Errorf("no 'pconf' tag found in provided confdef")
+        return fmt.Errorf("no '%v' tag found in provided confDef", commdef.CongigTagName)
     }
     return nil
 }
@@ -70,37 +67,23 @@ func SetLogger(l func(int, string, ...interface{})) {
     core.SetLogger(l)
 }
 
-func Load(done chan struct{}) error {
+func Load(done chan struct{}, zkAddr string) error {
     //开始从远程服务器加载需要的配置
     keys := core.EntryKeys()
     core.Log("start loading confs: count %v", len(keys))
-    keys = append(keys, NameKeyZKAddr)
     confs, err := core.FetchConfFromServer(currNamespace, keys)
     if err != nil {
         return err
     }
-    core.Log("fetch confs from confsvr ok.")
+    core.Log("fetch confs from confsvr ok. namespace %v", currNamespace)
 
-    // get zkaddr
-    var zkaddr string
-    for _, c := range confs {
-        if c.Key == commdef.ConfigKeyZKAddr {
-            zkaddr = c.Value
-        }
-    }
-    if zkaddr == "" {
-        return errors.New("zkaddr config not found")
-    }
-    err = core.InitWatcher(zkaddr)
+    err = core.InitWatcher(zkAddr)
     if err != nil {
         return err
     }
 
     notify := make(chan string)
     for _, c := range confs {
-        if c.Key == commdef.ConfigKeyZKAddr {
-            continue
-        }
         err = core.InitEntry(c.Key, c.Value)
         if err != nil {
             return err

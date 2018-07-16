@@ -3,11 +3,13 @@ package configcli
 import (
 	"testing"
 	"strconv"
+    "github.com/philipyao/prpc/registry"
+    "github.com/philipyao/prpc/client"
 )
 
 type SampleConfDef struct {
-	foo         string  `pconf:"foo"`
-	bar         int     `pconf:"bar"`
+	foo         string  `config:"foo"`
+	bar         int     `config:"bar"`
 }
 func (scd *SampleConfDef) Foo() string {
 	return scd.foo
@@ -35,33 +37,22 @@ func (scd *SampleConfDef) OnUpdateBar(val, oldVal string) {
 }
 
 func TestRegisterConfDef(t *testing.T) {
-	err := RegisterConfDef(&SampleConfDef{})
+    zkAddr := "localhost:2181"
+    config := &registry.RegConfigZooKeeper{ZKAddr: zkAddr}
+    client := client.New(config)
+    if client == nil {
+        t.Fatal("error new client")
+    }
+
+	err := RegisterConfig("game", new(SampleConfDef), client)
 	if err != nil {
 		t.Error(err)
 	}
-	t.Log("test normal ok.")
-}
-
-
-type SampleConfDef2 struct {
-	hello         string    `pconf:"hello"`
-	world         int
-}
-func (scd2 *SampleConfDef2) Hello() string {
-	return scd2.hello
-}
-func (scd2 *SampleConfDef2) SetHello(v string) error {
-	scd2.hello = v
-	return nil
-}
-func (scd2 *SampleConfDef2) OnUpdateHello(val, oldVal string) {
-	return
-}
-
-func TestRegisterConfDef2(t *testing.T) {
-	err := RegisterConfDef(new(SampleConfDef2))
-	if err != nil {
-		t.Error(err)
-	}
+    done := make(chan struct{})
+    err = Load(done, zkAddr)
+    if err != nil {
+        t.Fatal(err)
+    }
+    <- done
 	t.Log("test normal ok.")
 }

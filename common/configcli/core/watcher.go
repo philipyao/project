@@ -1,12 +1,13 @@
 package core
 
 import (
-    "fmt"
     "strings"
 
-    "base/zkcli"
-    "project/share/commdef"
+    "github.com/philipyao/kit/zkcli"
+    "github.com/philipyao/project/common/commdef"
+    "errors"
 )
+
 var (
     conn    *zkcli.Conn
 )
@@ -22,7 +23,7 @@ func InitWatcher(zkaddr string) error {
 
 func WatchEntryUpdate(namespace, key string, notify chan string, done chan struct{}) error {
     if conn == nil {
-        return fmt.Errorf("nil zk conn")
+        return errors.New("nil zk conn")
     }
     entryPath := strings.Join([]string{commdef.ZKPrefixConfig, namespace, key}, "/")
     return conn.Watch(entryPath, func(p string, d []byte, e error){
