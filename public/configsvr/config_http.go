@@ -33,6 +33,7 @@ type SUserinfo struct {
 type AdminListRsp struct {
     AdminError
     Entries      []*ConfEntry          `json:"entries"`
+    Namespaces   []string              `json:"namespaces"`
 }
 type ConfEntry struct {
     ID              uint        `json:"id"`
@@ -86,6 +87,15 @@ type UserEntry struct {
     Username        string              `json:"username"`
     Enabled         uint                `json:"enabled"`
     CreatedAt       int                 `json:"created_at"`
+}
+
+type AdminCreateNamespaceReq struct {
+    Namespace       string          `json:"namespace"`
+    Comment         string          `json:"comment"`
+    Author          string          `json:"author"`
+}
+type AdminCreateNamespaceRsp struct {
+    AdminError
 }
 
 type AdminCreateUserReq struct {
@@ -202,6 +212,7 @@ func serveHttp(worker *phttp.HTTPWorker) error {
         for _, r := range results {
             rsp.Entries = append(rsp.Entries, dumpConfEntry(r))
         }
+        rsp.Namespaces = core.AllNamespace()
         doWriteJson(ctx, rsp)
         return nil
     })
@@ -276,6 +287,34 @@ func serveHttp(worker *phttp.HTTPWorker) error {
         }
         rsp.Failed = failed
         doWriteJson(ctx, rsp)
+        return nil
+    })
+
+    //逻辑接口：新建私有空间
+    logicGroup.Post("/api/namespace/create", func(ctx *phttp.Context) error {
+        var req AdminCreateNamespaceReq
+        err = ctx.Request().JsonBody(&req)
+        if err != nil {
+            doWriteError(ctx, def.ErrParamParseBody, err.Error())
+            return nil
+        }
+        log.Info(">> req: %+v", req)
+
+        //开始参数校验
+        if req.Namespace == "" || req.Author == "" {
+            doWriteError(ctx, def.ErrParamInvalid, "no namespace or author provided, pls check")
+            return nil
+        }
+        if req.Namespace == def.ConfNamespaceCommon || req.Namespace == "all" {
+            doWriteError(ctx, def.ErrParamInvalid, "name `common`, `all` is reserved")
+            return nil
+        }
+        err = core.CreateNamespace(req.Author, req.Namespace, req.Comment)
+        if err != nil {
+            doWriteError(ctx, def.ErrHandle,  err.Error())
+            return nil
+        }
+        doWriteJson(ctx, &AdminCreateNamespaceRsp{})
         return nil
     })
 

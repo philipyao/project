@@ -15,7 +15,9 @@ var (
 type Namespace []string
 
 func (n *Namespace) Load(ns []string) {
+    *n = make([]string, len(ns))
     copy(*n, ns)
+    log.Debug("ns load: %+v", ns)
 }
 
 func (n *Namespace) Exist(val string) bool {
@@ -30,23 +32,20 @@ func (n *Namespace) Exist(val string) bool {
 //预先生成公共空间
 func (n *Namespace) CreateCommon() (err error) {
     name := def.ConfNamespaceCommon
+    if n.Exist(name) {
+        return nil
+    }
     defer func() {
         if err == nil {
             *n = append(*n, name)
         }
     }()
-    exist, err := db.ExistNamespace(name)
-    if err != nil {
-        return err
-    }
-    if exist {
-        return nil
-    }
+    log.Info("ceate namespace %v", name)
     return n.doCreate(def.AdminUsername, name, "公共配置区间，配置项可以被私有同名配置项覆盖")
 }
 
 //创建普通私有空间
-func (n *Namespace)Create(creator, name, desc string) error {
+func (n *Namespace) Create(creator, name, desc string) error {
     err := n.doCreate(creator, name, desc)
     if err != nil {
         return err

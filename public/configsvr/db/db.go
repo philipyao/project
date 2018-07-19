@@ -161,24 +161,30 @@ func InsertNamespace(ns *def.Namespace) error  {
     return nil
 }
 
-func LoadConfigAll() (confs []*def.Config, namespaces []string, err error) {
+func LoadNamespaceAll() (namespaces []string, err error) {
     if engine == nil {
-        return nil, nil, errors.New("null engine")
+        return nil, errors.New("null engine")
     }
+    var nameDefs []*def.Namespace
+    err = engine.Find(&nameDefs)
+    if err != nil {
+        log.Error("engine.Find() error %v", err)
+        return nil, err
+    }
+    for _, nameDef := range nameDefs {
+        namespaces = append(namespaces, nameDef.Name)
+    }
+    return
+}
 
-    confs = make([]*def.Config, 0)
+func LoadConfigAll() (confs []*def.Config, err error) {
+    if engine == nil {
+        return nil, errors.New("null engine")
+    }
     err = engine.Find(&confs)
     if err != nil {
         log.Error("engine.Find() error %v", err)
-        return nil, nil, err
-    }
-    tmpMap := make(map[string]bool)
-    for _, c := range confs {
-        tmpMap[c.Namespace] = true
-    }
-    namespaces = make([]string, 0, len(tmpMap))
-    for k := range tmpMap {
-        namespaces = append(namespaces, k)
+        return nil, err
     }
     return
 }

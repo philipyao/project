@@ -32,17 +32,28 @@ func Init(regAddr, dbAddr, dbLogin string) error {
         return err
     }
 
-    err = prepareDBData()
+    log.Debug("loadNamespaceFromDB...")
+    names, err := db.LoadNamespaceAll()
+    if err != nil {
+        return err
+    }
+    ns.Load(names)
 
     log.Debug("loadConfigFromDB...")
-    confs, namespaces, err := db.LoadConfigAll()
+    confs, err := db.LoadConfigAll()
     if err != nil {
         return err
     }
     log.Debug("loadConfigFromDB ok, count: %v", len(confs))
-    c.Load(confs)
-    ns.Load(namespaces)
+    err = c.Load(confs)
+    if err != nil {
+        return err
+    }
 
+    err = prepareDBData()
+    if err != nil {
+        return err
+    }
     err = initZK(regAddr)
     if err != nil {
         return err
@@ -148,6 +159,13 @@ func AllConfig() []def.Config {
     return results
 }
 
+func AllNamespace() []string {
+    return *ns
+}
+
+func CreateNamespace(creator, name, desc string) error {
+    return ns.Create(creator, name, desc)
+}
 //==========================================================
 
 func prepareDBData() error {
@@ -163,7 +181,6 @@ func prepareDBData() error {
     if err != nil {
         return err
     }
-    log.Debug("after prepareDBData: namespaces: %+v", ns)
     return nil
 }
 

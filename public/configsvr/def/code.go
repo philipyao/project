@@ -13,6 +13,7 @@ const (
     ErrParamParseBody       = -20002            //读取body失败
     ErrParamInvalid         = -20003            //参数非法
     ErrMethod               = -20101            //非法的method
+    ErrHandle               = -20102            //处理出错
 
     ErrUnauthorized         = 40001             //未授权
     ErrAccountDisabled      = 40002             //账号被禁用

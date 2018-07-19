@@ -3,15 +3,21 @@ package core
 import (
     "github.com/philipyao/project/public/configsvr/def"
     "github.com/philipyao/project/public/configsvr/db"
+    "fmt"
+    //log "github.com/philipyao/kit/logging"
 )
 
 type FuncTraverse func(*def.Config) error
 type Configure  map[uint]*def.Config
 
-func (c Configure) Load(confs []*def.Config) {
+func (c Configure) Load(confs []*def.Config) error {
     for _, v := range confs {
+        if ns.Exist(v.Namespace) == false {
+            return fmt.Errorf("config %+v, namespace not found", v)
+        }
         c[v.ID] = v
     }
+    return nil
 }
 
 func (c Configure) Get(id uint) *def.Config {
