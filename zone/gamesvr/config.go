@@ -18,10 +18,12 @@ func (cdf *ConfDefGame) Loglv() string {
     return cdf.loglv
 }
 func (cdf *ConfDefGame) SetLoglv(v string) error {
+    log.Debug("SetLoglv: %v", v)
     cdf.loglv = v
     return nil
 }
 func (cdf *ConfDefGame) OnUpdateLoglv(val, oldVal string) {
+    log.Debug("OnUpdateLoglv: %v %v", val, oldVal)
     err := log.SetLevel(cdf.loglv)
     if err != nil {
         log.Error("log.SetLevel(%v): %v", cdf.loglv, err)
@@ -32,10 +34,12 @@ func (cdf *ConfDefGame) OpenTime() string {
     return cdf.openTime
 }
 func (cdf *ConfDefGame) SetOpenTime(v string) error {
+    log.Debug("SetOpenTime: %v", v)
     cdf.openTime = v
     return nil
 }
 func (cdf *ConfDefGame) OnUpdateOpenTime(val, oldVal string) {
+    log.Debug("OnUpdateOpenTime: %v %v", val, oldVal)
     return
 }
 

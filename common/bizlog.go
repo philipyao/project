@@ -31,7 +31,7 @@ func InitBizlog() {
     if err != nil {
         panic(err)
     }
-    log.SetLevel(log.LevelStringDebug)
+    log.SetLevel(log.LevelStringInfo)
     log.SetFlags(log.LogDate | log.LogTime | log.LogMicroTime | log.LogShortFile)
 }
 
