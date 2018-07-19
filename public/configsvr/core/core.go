@@ -116,9 +116,9 @@ func AddConfig(namespace, key, value string) (*def.Config, error) {
         return nil, err
     }
 
-    err = notifyWithZK(namespace, key)
+    err = attachWithZK(namespace, key)
     if err != nil {
-        log.Error("notifyWithZK<%v, %v> err: %v", namespace, key, err)
+        log.Error("attachWithZK<%v, %v> err: %v", namespace, key, err)
     }
     return conf, nil
 }
